@@ -1,14 +1,14 @@
 # from flask.ext.script import Manager, Server
 from flask_script import Manager, Server
 from flask_migrate import Migrate, MigrateCommand
-import main
-import models
+from KanJanBlog import __init__
+from KanJanBlog import models
 
 # Init manager object via app object
-manager = Manager(main.app)
+manager = Manager(__init__.app)
 
 # Init migrate object via app adn db object
-migrate = Migrate(main.app, models.db)
+migrate = Migrate(__init__.app, models.db)
 
 # Create some new commands
 # This command will be run the Flask development_env server
@@ -23,7 +23,7 @@ def make_shell_context():
     :return: Default import object
     type: 'Dict'
     '''
-    return dict(app=main.app,
+    return dict(app=__init__.app,
                 db=models.db,
                 User=models.User,
                 Post=models.Post,

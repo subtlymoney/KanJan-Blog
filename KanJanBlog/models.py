@@ -1,10 +1,9 @@
 from flask_sqlalchemy import SQLAlchemy
-from main import app
 
 # INIT the sqlalchemy object
 # Will be load the SQLALCHEMY_DATABASE_URL from config.py
 # SQLAlchemy 会自动的从 app 对象中的 DevConfig 中加载链接数据库的配置项
-db = SQLAlchemy(app)
+db = SQLAlchemy()
 
 class User(db.Model):
     '''Represents Producted users'''

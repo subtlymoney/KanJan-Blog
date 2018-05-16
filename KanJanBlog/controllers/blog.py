@@ -1,19 +1,20 @@
+from uuid import uuid4
+import datetime
 from os import path
 from flask import render_template, Blueprint, redirect, url_for
 from sqlalchemy import func
 
-from main import app
-from models import db, User, Post, Tag, Comment, posts_tags
+from KanJanBlog.forms import CommentForm
+from KanJanBlog.models import db, User, Post, Tag, Comment, posts_tags
 
-from uuid import uuid4
-import datetime
 
-from wt_forms import CommentForm
+
 
 blog_blueprint = Blueprint(
     'blog',
     __name__,
-    template_folder=path.join('templates/blog'),
+    # template_folder=path.join('templates/blog'),
+    template_folder=path.join(path.pardir, 'templates', 'blog'),
     url_prefix='/blog'
 )
 
@@ -33,12 +34,6 @@ def sidebar_data():
     ).group_by(Tag).order_by('total DESC').limit(5).all()
     return recent, top_tags
 
-# 为app定义的一个根目录视图函数
-@app.route('/')
-def index():
-    print(url_for('blog.home'))
-    return redirect(url_for('blog.home'))
-
 # 指路由规则
 @blog_blueprint.route('/')
 @blog_blueprint.route('/<int:page>')
@@ -51,11 +46,16 @@ def home(page=1):
     ).paginate(page, 10)
 
     recent, top_tags = sidebar_data()
-
+    template_folder=path.join(path.pardir, path.pardir, 'templates', 'blog'),
+    print(template_folder)
     return render_template('home.html',
                            posts=posts,
                            recent=recent,
                            top_tags=top_tags)
+
+# @blog_blueprint.route('/')
+# def home(page=1):
+#     return render_template('blog/test1.html')
 
 @blog_blueprint.route('/post/<string:post_id>', methods=['GET', 'POST'])
 def post(post_id):
@@ -80,7 +80,7 @@ def post(post_id):
     comments = post.comments.order_by(Comment.date.desc()).all()
     recent, top_tags = sidebar_data()
 
-    return render_template('post.html',
+    return render_template('blog/post.html',
                            post=post,
                            tags=tags,
                            comments=comments,
@@ -97,7 +97,7 @@ def tag(tag_name):
     posts = tag.posts.order_by(Post.publish_date.desc()).all()
     recent, top_tags = sidebar_data()
 
-    return render_template('tag.html',
+    return render_template('blog/tag.html',
                            tag=tag,
                            posts=posts,
                            recent=recent,
@@ -111,7 +111,7 @@ def user(username):
     posts = user.posts.order_by(Post.publish_date.desc()).all()
     recent, top_tags = sidebar_data()
 
-    return render_template('user.html',
+    return render_template('blog/user.html',
                            user=user,
                            posts=posts,
                            recent=recent,
