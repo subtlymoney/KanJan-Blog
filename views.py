@@ -1,8 +1,21 @@
-from flask import render_template
+from os import path
+from flask import render_template, Blueprint, redirect, url_for
 from sqlalchemy import func
 
 from main import app
 from models import db, User, Post, Tag, Comment, posts_tags
+
+from uuid import uuid4
+import datetime
+
+from wt_forms import CommentForm
+
+blog_blueprint = Blueprint(
+    'blog',
+    __name__,
+    template_folder=path.join('templates/blog'),
+    url_prefix='/blog'
+)
 
 def sidebar_data():
     '''Set the sidebar function.'''
@@ -20,11 +33,18 @@ def sidebar_data():
     ).group_by(Tag).order_by('total DESC').limit(5).all()
     return recent, top_tags
 
-# 指路由规则
+# 为app定义的一个根目录视图函数
 @app.route('/')
-@app.route('/<int:page>')
+def index():
+    print(url_for('blog.home'))
+    return redirect(url_for('blog.home'))
+
+# 指路由规则
+@blog_blueprint.route('/')
+@blog_blueprint.route('/<int:page>')
 def home(page=1):
     """View function for home page"""
+
 
     posts = Post.query.order_by(
         Post.publish_date.desc()
@@ -37,11 +57,25 @@ def home(page=1):
                            recent=recent,
                            top_tags=top_tags)
 
-@app.route('/post/<string:post_id>')
+@blog_blueprint.route('/post/<string:post_id>', methods=['GET', 'POST'])
 def post(post_id):
     """View function for post page"""
 
-    post = db.session.query(Post).get_or_404(post_id)
+    # Form object: 'Comment'
+    form = CommentForm()
+    # form.validate_on_submit() will be true and return the
+    # data object to form instance from user enter,
+    # when the HTTP request is POST
+    if form.validate_on_submit():
+        new_comment = Comment(id=str(uuid4()),
+                              name=form.name.data)
+        new_comment.text = form.text.data
+        new_comment.date = datetime.datetime.now()
+        new_comment.post_id = post_id
+        db.session.add(new_comment)
+        db.session.commit()
+
+    post = Post.query.get_or_404(post_id)
     tags = post.tags
     comments = post.comments.order_by(Comment.date.desc()).all()
     recent, top_tags = sidebar_data()
@@ -50,13 +84,15 @@ def post(post_id):
                            post=post,
                            tags=tags,
                            comments=comments,
+                           form=form,
                            recent=recent,
                            top_tags=top_tags)
 
-@app.route('/tag/<string:tag_name>')
+@blog_blueprint.route('/tag/<string:tag_name>')
 def tag(tag_name):
     """View function for tag page"""
 
+    # Tag.qurey() 对象才有 first_or_404()，而 db.session.query(Model) 是没有的
     tag = db.session.query(Tag).filter_by(name=tag_name).first_or_404()
     posts = tag.posts.order_by(Post.publish_date.desc()).all()
     recent, top_tags = sidebar_data()
@@ -68,10 +104,9 @@ def tag(tag_name):
                            top_tags=top_tags)
 
 
-@app.route('/user/<string:username>')
+@blog_blueprint.route('/user/<string:username>')
 def user(username):
-    """View function for user age"""
-
+    """View function for user page"""
     user = db.session.query(User).filter_by(username=username).first_or_404()
     posts = user.posts.order_by(Post.publish_date.desc()).all()
     recent, top_tags = sidebar_data()
@@ -81,5 +116,6 @@ def user(username):
                            posts=posts,
                            recent=recent,
                            top_tags=top_tags)
-    pass
+
+
 

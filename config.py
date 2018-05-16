@@ -1,6 +1,6 @@
 class Config(object):
     '''Base config class.'''
-    pass
+    SECRET_KEY = '6\xba\xcc\x99\xf4\xe1\x01\xddLy7\xf2N]\t\x81\x83x\xce\xbb\xb6z\xeb\xdf'
 
 class ProConfig(Config):
     '''Production config class.'''
